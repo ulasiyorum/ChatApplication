@@ -1,5 +1,8 @@
-﻿namespace ChatApplication_backend.Models
+﻿using System.Text.Json.Serialization;
+
+namespace ChatApplication_backend.Models
 {
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum MessageType
     {
         Normal = 0,
