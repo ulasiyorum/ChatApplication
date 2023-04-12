@@ -12,19 +12,94 @@ namespace ChatApplication_backend.Services.AuthService
             context = c;
         }
 
-        public Task<ServiceResponse<GetUserDto>> Login(string username, string password)
+        public async Task<ServiceResponse<GetUserDto>> Login(string username, string password)
         {
-            throw new NotImplementedException();
+            var response = new ServiceResponse<GetUserDto>();
+            try
+            {
+                var user = await context.Users.FirstOrDefaultAsync(u => u.Username.ToLower().Equals(username.ToLower()));
+
+                if (user is null)
+                    throw new Exception("User does not exist");
+
+                else if (!VerifyPasswordHash(password, user.PasswordHash, user.PasswordSalt))
+                    throw new Exception("Wrong password");
+
+
+
+                response.Data = new GetUserDto
+                {
+                    Username = user.Username,
+                    Chats = user.Chats?.Select(c => c.Id).ToList()
+                };
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = ex.Message;
+            }
+            return response;
         }
 
-        public Task<ServiceResponse<GetUserDto>> Register(User user, string password)
+        public async Task<ServiceResponse<GetUserDto>> Register(AddUserDto user, string password)
         {
-            throw new NotImplementedException();
+            var response = new ServiceResponse<GetUserDto>();
+            try
+            {
+                if (await UserExists(user.Username))
+                    throw new Exception("User already exists");
+
+                CreatePasswordHash(password, out byte[] passwordHash, out byte[] passwordSalt);
+
+                var users = await context.Users.ToListAsync();
+
+                User us = new User
+                {
+                    PasswordHash = passwordHash,
+                    PasswordSalt = passwordSalt,
+                    Username = user.Username,
+                    Id = users.Count + 1
+                };
+
+                await context.Users.AddAsync(us);
+                await context.SaveChangesAsync();
+
+                response.Data = new GetUserDto
+                {
+                    Username = us.Username,
+                    Chats = us.Chats?.Select(c => c.Id).ToList()
+                };
+            }
+            catch(Exception ex)
+            {
+                response.Success = false;
+                response.Message = ex.Message;
+            }
+            return response;
+        }
+
+        private void CreatePasswordHash(string password, out byte[] passwordHas, out byte[] passwordSalt)
+        {
+            using (var hmac = new System.Security.Cryptography.HMACSHA512())
+            {
+                passwordSalt = hmac.Key;
+                passwordHas = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
+            }
+        }
+
+        private bool VerifyPasswordHash(string password, byte[] hash, byte[] salt)
+        {
+            using (var hmac = new System.Security.Cryptography.HMACSHA512(salt))
+            {
+                var computedHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
+
+                return computedHash.SequenceEqual(hash);
+            }
         }
 
         public async Task<bool> UserExists(string username)
         {
-            return await context.Users.FirstOrDefaultAsync(u => u.Username == username) is not null;
+            return await context.Users.AnyAsync(u => u.Username.ToLower() == username.ToLower());
         }
     }
 }
