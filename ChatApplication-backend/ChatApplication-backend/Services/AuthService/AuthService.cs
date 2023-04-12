@@ -42,7 +42,7 @@ namespace ChatApplication_backend.Services.AuthService
             return response;
         }
 
-        public async Task<ServiceResponse<GetUserDto>> Register(AddUserDto user, string password)
+        public async Task<ServiceResponse<GetUserDto>> Register(AddUserDto user)
         {
             var response = new ServiceResponse<GetUserDto>();
             try
@@ -50,7 +50,7 @@ namespace ChatApplication_backend.Services.AuthService
                 if (await UserExists(user.Username))
                     throw new Exception("User already exists");
 
-                CreatePasswordHash(password, out byte[] passwordHash, out byte[] passwordSalt);
+                CreatePasswordHash(user.Password, out byte[] passwordHash, out byte[] passwordSalt);
 
                 var users = await context.Users.ToListAsync();
 
