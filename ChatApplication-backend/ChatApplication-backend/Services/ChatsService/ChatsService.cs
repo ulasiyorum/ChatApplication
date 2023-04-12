@@ -34,6 +34,7 @@ namespace ChatApplication_backend.Services.ChatsService
 
                 response.Data = new GetChatDto
                 {
+                    Id = chat.Id,
                     IsSenderOrReceiver = isSender ? Status.Sender : Status.Receiver,
                     DeletedMessages = isSender ? chat.SenderDeletedMessages : chat.ReceiverDeletedMessages,
                     Messages = chat.Messages.Select(m => new GetMessageDto
@@ -75,6 +76,7 @@ namespace ChatApplication_backend.Services.ChatsService
 
                 response.Data = new GetChatDto
                 {
+                    Id = chat.Id,
                     DeletedMessages = isSender ? chat.SenderDeletedMessages : chat.ReceiverDeletedMessages,
                     IsSenderOrReceiver = isSender ? Status.Sender : Status.Receiver,
                     ReceiverUsername = users.FirstOrDefault(u => u.Id == chat.ReceiverId)!.Username,
@@ -169,7 +171,13 @@ namespace ChatApplication_backend.Services.ChatsService
                     user.Chats = new List<Chat>();
 
                 var chat = user.Chats.FirstOrDefault(c => (c.SenderId == mess.SenderId || c.ReceiverId == mess.SenderId) && (c.ReceiverId == mess.SenderId || c.SenderId == mess.ReceiverId));
-
+                Message message = new Message
+                {
+                    SendDate = DateTime.Now,
+                    SenderId = mess.SenderId,
+                    Type = mess.Type,
+                    Content = mess.Content,
+                };
                 if (chat is null)
                 {
                     chat = new Chat
@@ -178,19 +186,38 @@ namespace ChatApplication_backend.Services.ChatsService
                         SenderId = mess.SenderId,
                     };
 
-                    chat.Messages.Add(new Message
-                    {
-
-                        Content = mess.Content,
-                    });
+                    chat.Messages.Add(message);
 
                     user.Chats.Add(chat);
                 }
                 else
                 {
-
+                    chat.Messages.Add(message);
                 }
 
+                await context.SaveChangesAsync();
+
+
+                var users = await context.Users.ToListAsync();
+                bool isSender = chat.SenderId == mess.SenderId;
+
+                response.Data = new GetChatDto
+                {
+                    Id = chat.Id,
+                    DeletedMessages = isSender ? chat.SenderDeletedMessages : chat.ReceiverDeletedMessages,
+                    IsSenderOrReceiver = isSender ? Status.Sender : Status.Receiver,
+                    ReceiverUsername = users.FirstOrDefault(u => u.Id == chat.ReceiverId)!.Username,
+                    SenderUsername = users.FirstOrDefault(u => u.Id == chat.SenderId)!.Username,
+                    Messages = chat.Messages.Select(m => new GetMessageDto
+                    {
+                        Id = m.Id,
+                        ColorHex = m.Type == MessageType.Normal ? "#808080" : m.Type == MessageType.Green ? "#81B509" :
+                        m.Type == MessageType.Alert ? "#FFC535" : m.Type == MessageType.Error ? "#FF492D" : "#808080",
+                        Type = m.Type.ToString(),
+                        Message = m.Content,
+                        SendDate = m.SendDate
+                    }).ToList()
+                };
             }
             catch (Exception ex)
             {
