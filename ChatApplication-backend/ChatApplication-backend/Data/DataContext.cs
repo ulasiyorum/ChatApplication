@@ -11,5 +11,6 @@ namespace ChatApplication_backend.Data
         }
 
         public DbSet<User> Users => Set<User>();
+        public DbSet<Chat> Chats => Set<Chat>();
     }
 }
