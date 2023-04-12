@@ -4,6 +4,7 @@ namespace ChatApplication_backend.Dtos
 {
     public class GetChatDto
     {
+        public int Id { get; set; }
         public List<GetMessageDto>? Messages { get; set; }
         public List<int> DeletedMessages { get; set; } = new List<int>();
         public string SenderUsername { get; set; } = string.Empty;

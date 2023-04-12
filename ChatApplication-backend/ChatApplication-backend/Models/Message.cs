@@ -1,7 +1,10 @@
-﻿namespace ChatApplication_backend.Models
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace ChatApplication_backend.Models
 {
     public class Message
     {
+        [Key]
         public int Id { get; set; }
         public int SenderId { get; set; }
         public string Content { get; set; } = string.Empty;

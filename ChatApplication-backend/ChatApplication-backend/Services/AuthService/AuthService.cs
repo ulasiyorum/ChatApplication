@@ -29,6 +29,7 @@ namespace ChatApplication_backend.Services.AuthService
 
                 response.Data = new GetUserDto
                 {
+                    Id = user.Id,
                     Username = user.Username,
                     Chats = user.Chats?.Select(c => c.Id).ToList()
                 };
@@ -58,7 +59,6 @@ namespace ChatApplication_backend.Services.AuthService
                     PasswordHash = passwordHash,
                     PasswordSalt = passwordSalt,
                     Username = user.Username,
-                    Id = users.Count + 1
                 };
 
                 await context.Users.AddAsync(us);

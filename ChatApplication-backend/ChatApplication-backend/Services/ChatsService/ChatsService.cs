@@ -127,6 +127,7 @@ namespace ChatApplication_backend.Services.ChatsService
                     data.Add(
                     new GetChatDto
                     {
+                        Id = chat.Id,
                         IsSenderOrReceiver = sender ? Status.Sender : Status.Receiver,
                         DeletedMessages = sender ? chat.SenderDeletedMessages : chat.ReceiverDeletedMessages,
                         Messages = chat.Messages.Select(m => new GetMessageDto
@@ -159,6 +160,36 @@ namespace ChatApplication_backend.Services.ChatsService
             var response = new ServiceResponse<GetChatDto>();
             try
             {
+                var user = await context.Users.FirstOrDefaultAsync(u => u.Id == mess.SenderId);
+
+                if (user is null)
+                    throw new Exception("User not found");
+
+                if (user.Chats is null)
+                    user.Chats = new List<Chat>();
+
+                var chat = user.Chats.FirstOrDefault(c => (c.SenderId == mess.SenderId || c.ReceiverId == mess.SenderId) && (c.ReceiverId == mess.SenderId || c.SenderId == mess.ReceiverId));
+
+                if (chat is null)
+                {
+                    chat = new Chat
+                    {
+                        ReceiverId = mess.ReceiverId,
+                        SenderId = mess.SenderId,
+                    };
+
+                    chat.Messages.Add(new Message
+                    {
+
+                        Content = mess.Content,
+                    });
+
+                    user.Chats.Add(chat);
+                }
+                else
+                {
+
+                }
 
             }
             catch (Exception ex)
